@@ -99,5 +99,4 @@ router.get('/home/:user/:id/:page', (req, res, next) => {
   });
 });
 
-console.log(router.route());
 module.exports = router;
