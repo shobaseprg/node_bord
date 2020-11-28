@@ -20,7 +20,7 @@ function check(req, res) {
 
 // トップページ
 router.get('/', (req, res, next) => {
-  res.redirect('/boards/0');
+  res.redirect('/boards/0');/* ページ番号0をつけて返す */
 });
 
 // ===================================
