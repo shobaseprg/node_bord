@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../models/index');
+//models/indexをrequireで全てのモデルが使える。
 const { Op } = require('sequelize');
 const MarkdownIt = require('markdown-it');
 const markdown = new MarkdownIt();

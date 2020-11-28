@@ -1,21 +1,27 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../models/index');
-
-/* GET users listing. */
 const { Op } = require("sequelize");
+const session = require('express-session'); //☆
 
+
+// ===================================
+// /users   ユーザー一覧
+// ===================================
 router.get('/', (req, res, next) => {
-  db.User.findAll().then(usrs => {
+  db.User.findAll().then(usrs => {// 全てのユーザー取得
     var data = {
       title: 'Users/Index',
-      content: usrs
+      content: usrs,
+      userId: req.session.login.id
     }
-    console.log(req.url);
+    console.log(req.session.login.id);
     res.render('users/index', data);
   });
 });
-
+// ===================================
+// /users/add   ユーザー追加入力
+// ===================================
 router.get('/add', (req, res, next) => {
   var data = {
     title: 'Users/Add',
@@ -25,6 +31,9 @@ router.get('/add', (req, res, next) => {
   res.render('users/add', data);
 });
 
+//===================================
+///users/add  ユーザー登録
+//===================================
 router.post('/add', (req, res, next) => {
   const form = {
     name: req.body.name,
@@ -32,25 +41,28 @@ router.post('/add', (req, res, next) => {
     mail: req.body.mail,
     age: req.body.age
   };
-  db.sequelize.sync()
-    .then(() => db.User.create(form)
+  db.sequelize.sync()  /* 同期処理 */
+    .then(() => db.User.create(form)/* formオブジェクトを引数に作成 */
       .then(usr => {
+        req.session.login = usr;
         res.redirect('/users')
       })
-      .catch(err => {
+      .catch(err => {/* 弾かれた場合errにはエラー情報が格納 */
         var data = {
           title: 'Users/Add',
           form: form,
-          err: err
+          err: err,
         }
         res.render('users/add', data);
       })
     )
 });
 
-
-router.get('/edit', (req, res, next) => {
-  db.User.findByPk(req.query.id)
+//===================================
+///users/edit 編集画面
+//===================================
+router.get('/edit/:id', (req, res, next) => {
+  db.User.findByPk(req.params.id)
     .then(usr => {
       var data = {
         title: 'Users/Edit',
@@ -60,6 +72,9 @@ router.get('/edit', (req, res, next) => {
     });
 });
 
+//===================================
+///users/edit  更新
+//===================================
 router.post('/edit', (req, res, next) => {
   db.User.findByPk(req.body.id)
     .then(usr => {
@@ -70,9 +85,11 @@ router.post('/edit', (req, res, next) => {
       usr.save().then(() => res.redirect('/users'));
     });
 });
-
-router.get('/delete', (req, res, next) => {
-  db.User.findByPk(req.query.id)
+//===================================
+///users/delete  削除
+//===================================
+router.get('/delete/:id', (req, res, next) => {
+  db.User.findByPk(req.params.id)
     .then(usr => {
       var data = {
         title: 'Users/Delete',
@@ -81,14 +98,18 @@ router.get('/delete', (req, res, next) => {
       res.render('users/delete', data);
     });
 });
-
+//===================================
+///users/delete  削除実行
+//===================================
 router.post('/delete', (req, res, next) => {
-  db.User.findByPk(req.body.id)
+  db.User.findByPk(req.session.login.id)
     .then(usr => {
-      usr.destroy().then(() => res.redirect('/users'));
+      usr.destroy().then(() => res.redirect('/'));
     });
 });
-
+//===================================
+///users/login ログイン
+//===================================
 router.get('/login', (req, res, next) => {
   var data = {
     title: 'Users/Login',
@@ -96,7 +117,9 @@ router.get('/login', (req, res, next) => {
   }
   res.render('users/login', data);
 });
-
+//===================================
+///users/login ログイン実行
+//===================================
 router.post('/login', (req, res, next) => {
   db.User.findOne({
     where: {
@@ -104,13 +127,14 @@ router.post('/login', (req, res, next) => {
       pass: req.body.pass,
     }
   }).then(usr => {
-    if (usr != null) {
-      req.session.login = usr;
-      let back = req.session.back;
-      if (back == null) {
-        back = '/';
-      }
-      res.redirect(back);
+    if (usr != null) {/* 該当するレコードがあれば */
+      req.session.login = usr;/* セッションにほぞん */
+      // let back = req.session.back;
+      // console.log(back);
+      // if (back == null) {
+      //   back = '/';
+      // }
+      res.redirect("/users");
     } else {
       var data = {
         title: 'Users/Login',

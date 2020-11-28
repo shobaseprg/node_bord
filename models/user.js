@@ -1,5 +1,6 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
+  // 関数をエクスポート
   const User = sequelize.define('User', {
     name: {
       type: DataTypes.STRING,
